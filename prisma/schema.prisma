@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Integration {
+  id              String           @id @default(cuid())
+  wixSiteId       String           @unique
+  hubspotPortalId String?
+  accessToken     String
+  refreshToken    String
+  tokenExpiresAt  DateTime?
+  connectedAt     DateTime         @default(now())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  ContactMapping  ContactMapping[]
+  FieldMapping    FieldMapping[]
+  SyncLog         SyncLog[]
+}
+
+model ContactMapping {
+  id               String      @id @default(cuid())
+  integrationId    String
+  wixContactId     String
+  hubspotContactId String
+  lastSyncSource   String?
+  lastSyncAt       DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  Integration      Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+}
+
+model FieldMapping {
+  id              String      @id
+  integrationId   String
+  wixField        String
+  hubspotProperty String
+  direction       String
+  transformRule   String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime
+  Integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+}
+
+model SyncLog {
+  id            String      @id
+  integrationId String
+  syncId        String
+  source        String
+  action        String
+  status        String
+  payloadHash   String?
+  errorMessage  String?
+  createdAt     DateTime    @default(now())
+  Integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+}
